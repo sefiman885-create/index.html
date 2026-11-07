@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sefi Bingo</title>
+  <style>
+    :root {
+      --bg-dark: #2d1037;
+      --header-bg: #1c0824;
+      --panel-bg: #3c124a;
+      --accent-orange: #f57c00;
+      --accent-yellow: #fbc02d;
+      --accent-green: #2e7d32;
+      --btn-purple: #7b1fa2;
+      --text-white: #ffffff;
+      --text-muted: #ce93d8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg-dark);
+      color: var(--text-white);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Top App Bar */
+    .app-header {
+      background-color: var(--header-bg);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 18px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .close-icon {
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    /* Status Ribbon */
+    .top-ribbon {
+      background-color: #240a2c;
+      padding: 8px 10px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      flex-shrink: 0;
+    }
+
+    .btn-leave {
+      background: #4a154b;
+      border: 1px solid #9c27b0;
+      color: white;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .ribbon-cell {
+      background: #381044;
+      border: 1px solid #6a1b9a;
+      border-radius: 8px;
+      padding: 4px 6px;
+      text-align: center;
+      flex: 1;
+      min-height: 46px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .ribbon-cell .title {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .ribbon-cell .val {
+      font-size: 13px;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .btn-refresh {
+      background: var(--btn-purple);
+      border: none;
+      color: white;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Main Scrollable Area */
+    .content-area {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 10px 10px 80px 10px; /* 80px to clear bottom nav */
+    }
+
+    .selector-info {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 6px 10px 6px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #a7f3d0;
+    }
+
+    /* 600 Card Grid Layout */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+      width: 100%;
+    }
+
+    .card-item {
+      background-color: var(--accent-orange);
+      color: white;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      transition: transform 0.05s ease;
+    }
+
+    .card-item:active {
+      transform: scale(0.92);
+    }
+
+    .card-item.selected {
+      background-color: var(--accent-green) !important;
+      outline: 2px solid #ffffff;
+    }
+
+    /* Live Game Screen */
+    .live-view {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .live-view.active {
+      display: flex;
+    }
+
+    .call-strip {
+      width: 100%;
+      max-width: 360px;
+      background: linear-gradient(90deg, #5c1869, #2b0b35);
+      border-radius: 12px;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border: 1px solid #ab47bc;
+    }
+
+    .call-badge {
+      background: var(--accent-orange);
+      color: white;
+      font-size: 24px;
+      font-weight: 900;
+      padding: 6px 20px;
+      border-radius: 20px;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+      max-width: 360px;
+      margin-bottom: 12px;
+    }
+
+    .btn-action {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      color: white;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .btn-sound { background: var(--btn-purple); }
+    .btn-auto { background: #3949ab; }
+    .btn-auto.active { background: var(--accent-green); }
+
+    /* 5x5 Bingo Board */
+    .board-card {
+      width: 100%;
+      max-width: 360px;
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+
+    .board-header {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      text-align: center;
+      font-weight: 900;
+      font-size: 20px;
+      color: white;
+      padding: 6px 0;
+    }
+
+    .col-B { background: #f59e0b; }
+    .col-I { background: #10b981; }
+    .col-N { background: #3b82f6; }
+    .col-G { background: #ef4444; }
+    .col-O { background: #8b5cf6; }
+
+    .board-body {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 3px;
+      background: #e2e8f0;
+      padding: 4px;
+    }
+
+    .cell {
+      background: #ffffff;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      font-weight: 800;
+      color: #1e293b;
+      border-radius: 4px;
+    }
+
+    .cell.hit {
+      background: var(--accent-yellow);
+      color: #000;
+    }
+
+    .cell.win-line {
+      background: var(--accent-green) !important;
+      color: #fff !important;
+    }
+
+    .cell.star {
+      background: var(--accent-green);
+      color: white;
+      font-size: 22px;
+    }
+
+    /* Winner Popup */
+    .winner-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(18, 4, 25, 0.94);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 16px;
+    }
+
+    .winner-card {
+      background: #ecd5ff;
+      border-radius: 18px;
+      width: 100%;
+      max-width: 340px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    }
+
+    .winner-banner {
+      background: var(--accent-orange);
+      color: white;
+      font-size: 28px;
+      font-weight: 900;
+      width: 100%;
+      text-align: center;
+      padding: 8px 0;
+      border-radius: 12px;
+      letter-spacing: 1.5px;
+    }
+
+    .winner-player-tag {
+      background: #0284c7;
+      color: white;
+      padding: 5px 16px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 14px;
+      margin: 10px 0;
+    }
+
+    .winner-board-tag {
+      color: #15803d;
+      font-weight: 900;
+      font-size: 15px;
+      margin: 8px 0;
+    }
+
+    .winner-countdown {
+      background: var(--accent-orange);
+      color: white;
+      width: 100%;
+      text-align: center;
+      font-size: 32px;
+      font-weight: 900;
+      padding: 8px 0;
+      border-radius: 12px;
+      margin-top: 6px;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background-color: #1f0729;
+      border-top: 1px solid #4a154b;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #a855f7;
+      font-size: 11px;
+      cursor: pointer;
+      gap: 3px;
+    }
+
+    .nav-btn.active {
+      color: #ffffff;
+      font-weight: bold;
+    }
+
+    .nav-btn svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- App Header -->
+  <div class="app-header">
+    <span class="close-icon" onclick="resetToLobby()">✕</span>
+    <span>Sefi Bingo</span>
+    <span>⋮</span>
+  </div>
+
+  <!-- Status Ribbon -->
+  <div class="top-ribbon">
+    <button class="btn-leave" onclick="resetToLobby()">✕ Leave</button>
+
+    <div class="ribbon-cell" id="lobbyBox">
+      <span class="title">Preparing...</span>
+      <span class="val" id="lobbyTimeText">00:30</span>
+    </div>
+
+    <div class="ribbon-cell hidden" id="playersBox">
+      <span class="title">Players</span>
+      <span class="val" id="playersVal">0</span>
+    </div>
+
+    <div class="ribbon-cell hidden" id="derashBox">
+      <span class="title">Derash (80%)</span>
+      <span class="val" id="derashVal">0 ETB</span>
+    </div>
+
+    <div class="ribbon-cell hidden" id="calledBox">
+      <span class="title">Called</span>
+      <span class="val" id="calledCount">0</span>
+    </div>
+
+    <div class="ribbon-cell">
+      <span class="title">Wallet</span>
+      <span class="val" id="walletVal">0 ETB</span>
+    </div>
+
+    <div class="ribbon-cell">
+      <span class="title">Stake</span>
+      <span class="val">10 ETB</span>
+    </div>
+
+    <button class="btn-refresh" id="btnRefresh" onclick="render600Cards()">↻</button>
+  </div>
+
+  <div class="content-area">
+    <!-- View 1: 600 Card Grid Selector -->
+    <div id="selectorContainer">
+      <div class="selector-info">
+        <span id="selectedBoardsTxt">Boards: 0/3</span>
+        <span>Stake: 10 ETB</span>
+      </div>
+      <div class="cards-grid" id="grid600"></div>
+    </div>
+
+    <!-- View 2: Live Game Stage -->
+    <div class="live-view" id="liveContainer">
+      <div class="call-strip">
+        <span style="font-weight: bold; font-size: 14px;">የተጠራው ቁጥር:</span>
+        <div class="call-badge" id="callDisplay">--</div>
+      </div>
+
+      <div class="controls-row">
+        <button class="btn-action btn-sound" onclick="toggleAudio()">🔊 Sound</button>
+        <button class="btn-action btn-auto active" id="autoBingoBtn" onclick="toggleAutoBingo()">⚡ Auto: ON</button>
+      </div>
+
+      <div class="board-card">
+        <div class="board-header">
+          <div class="col-B">B</div>
+          <div class="col-I">I</div>
+          <div class="col-N">N</div>
+          <div class="col-G">G</div>
+          <div class="col-O">O</div>
+        </div>
+        <div class="board-body" id="playerGameBoard"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Winner Overlay Modal -->
+  <div class="winner-overlay" id="winnerModal">
+    <div class="winner-card">
+      <div class="winner-banner">BINGO!</div>
+      <div class="winner-player-tag" id="winnerNameTag">ተጫዋች #353 አሸንፏል!</div>
+
+      <div class="board-card" style="width: 100%;">
+        <div class="board-header">
+          <div class="col-B">B</div>
+          <div class="col-I">I</div>
+          <div class="col-N">N</div>
+          <div class="col-G">G</div>
+          <div class="col-O">O</div>
+        </div>
+        <div class="board-body" id="winnerGameBoard"></div>
+      </div>
+
+      <div class="winner-board-tag" id="winnerBoardNo">Board Number #353</div>
+      <div class="winner-countdown" id="winnerTimer">9</div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <div class="nav-btn active">
+      <svg viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+      <span>Game</span>
+    </div>
+    <div class="nav-btn">
+      <svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+      <span>History</span>
+    </div>
+    <div class="nav-btn">
+      <svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+      <span>Wallet</span>
+    </div>
+    <div class="nav-btn">
+      <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      <span>Profile</span>
+    </div>
+  </div>
+
+  <script>
+    const STAKE_AMOUNT = 10;
+    const WINNER_PERCENT = 0.80;
+    let activePlayerCount = 42;
+    let selectedCards = [];
+    let calledSet = new Set();
+    let isSoundOn = true;
+    let isAutoBingo = true;
+
+    let lobbyTimer = null;
+    let callTimer = null;
+    let currentBoard = null;
+
+    function amharicNumText(n) {
+      const units = ["", "አንድ", "ሁለት", "ሦስት", "አራት", "አምስት", "ስድስት", "ሰባት", "ስምንት", "ዘጠኝ"];
+      const teens = ["አስር", "አስራ አንድ", "አስራ ሁለት", "አስራ ሦስት", "አስራ አራት", "አስራ አምስት", "አስራ ስድስት", "አስራ ሰባት", "አስራ ስምንት", "አስራ ዘጠኝ"];
+      const tens = ["", "", "ሃያ", "ሰላሳ", "አርባ", "ሃምሳ", "ስድሳ", "ሰባ", "ሰማንያ", "ዘጠና"];
+
+      if (n < 10) return units[n];
+      if (n >= 10 && n < 20) return teens[n - 10];
+      const t = Math.floor(n / 10);
+      const u = n % 10;
+      return u === 0 ? tens[t] : `${tens[t]} ${units[u]}`;
+    }
+
+    function speakAmharic(text) {
+      if (!isSoundOn || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'am-ET';
+      utterance.rate = 0.88;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function speakCall(col, num) {
+      const letterNames = { 'B': 'ቢ', 'I': 'አይ', 'N': 'ኤን', 'G': 'ጂ', 'O': 'ኦ' };
+      speakAmharic(`${letterNames[col] || col}፣ ${amharicNumText(num)}`);
+    }
+
+    // Explicit function to populate 600 card buttons
+    function render600Cards() {
+      const grid = document.getElementById("grid600");
+      if (!grid) return;
+      grid.innerHTML = "";
+      
+      const fragment = document.createDocumentFragment();
+      for (let i = 1; i <= 600; i++) {
+        const item = document.createElement("div");
+        item.className = "card-item";
+        item.innerText = i;
+        if (selectedCards.includes(i)) item.classList.add("selected");
+        
+        item.addEventListener("click", () => {
+          if (selectedCards.includes(i)) {
+            selectedCards = selectedCards.filter(c => c !== i);
+            item.classList.remove("selected");
+          } else {
+            if (selectedCards.length >= 3) return;
+            selectedCards.push(i);
+            item.classList.add("selected");
+          }
+          document.getElementById("selectedBoardsTxt").innerText = `Boards: ${selectedCards.length}/3`;
+        });
+        fragment.appendChild(item);
+      }
+      grid.appendChild(fragment);
+    }
+
+    function makeBoardData() {
+      const ranges = { B: [1, 15], I: [16, 30], N: [31, 45], G: [46, 60], O: [61, 75] };
+      const res = { B: [], I: [], N: [], G: [], O: [] };
+      for (let col in ranges) {
+        let pool = [];
+        for (let i = ranges[col][0]; i <= ranges[col][1]; i++) pool.push(i);
+        pool.sort(() => Math.random() - 0.5);
+        res[col] = pool.slice(0, 5);
+      }
+      return res;
+    }
+
+    function renderBoard(elementId, data, winIndices = []) {
+      const el = document.getElementById(elementId);
+      el.innerHTML = "";
+      const letters = ['B', 'I', 'N', 'G', 'O'];
+
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+          const l = letters[c];
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          const idx = r * 5 + c;
+
+          if (r === 2 && c === 2) {
+            cell.innerHTML = "★";
+            cell.classList.add("star");
+          } else {
+            const val = data[l][r];
+            cell.innerText = val;
+            if (calledSet.has(val)) cell.classList.add("hit");
+          }
+
+          if (winIndices.includes(idx)) cell.classList.add("win-line");
+          el.appendChild(cell);
+        }
+      }
+    }
+
+    function startLobby() {
+      document.getElementById("selectorContainer").style.display = "block";
+      document.getElementById("liveContainer").classList.remove("active");
+
+      document.getElementById("lobbyBox").classList.remove("hidden");
+      document.getElementById("btnRefresh").classList.remove("hidden");
+      document.getElementById("playersBox").classList.add("hidden");
+      document.getElementById("derashBox").classList.add("hidden");
+      document.getElementById("calledBox").classList.add("hidden");
+
+      render600Cards();
+
+      let sec = 30;
+      document.getElementById("lobbyTimeText").innerText = `00:${sec}`;
+
+      clearInterval(lobbyTimer);
+      lobbyTimer = setInterval(() => {
+        sec--;
+        const padded = String(sec % 60).padStart(2, '0');
+        document.getElementById("lobbyTimeText").innerText = `00:${padded}`;
+
+        if (sec <= 0) {
+          clearInterval(lobbyTimer);
+          startLiveGame();
+        }
+      }, 1000);
+    }
+
+    function startLiveGame() {
+      document.getElementById("selectorContainer").style.display = "none";
+      document.getElementById("liveContainer").classList.add("active");
+
+      document.getElementById("lobbyBox").classList.add("hidden");
+      document.getElementById("btnRefresh").classList.add("hidden");
+      document.getElementById("playersBox").classList.remove("hidden");
+      document.getElementById("derashBox").classList.remove("hidden");
+      document.getElementById("calledBox").classList.remove("hidden");
+
+      const totalPool = activePlayerCount * STAKE_AMOUNT;
+      const winnerDerash = Math.round(totalPool * WINNER_PERCENT);
+
+      document.getElementById("playersVal").innerText = activePlayerCount;
+      document.getElementById("derashVal").innerText = `${winnerDerash} ETB`;
+      document.getElementById("calledCount").innerText = "0";
+
+      currentBoard = makeBoardData();
+      renderBoard("playerGameBoard", currentBoard);
+
+      let counter = 0;
+      clearInterval(callTimer);
+      callTimer = setInterval(() => {
+        counter++;
+        const cols = ['B', 'I', 'N', 'G', 'O'];
+        const col = cols[Math.floor(Math.random() * 5)];
+        const ranges = { B: [1, 15], I: [16, 30], N: [31, 45], G: [46, 60], O: [61, 75] };
+        const num = Math.floor(Math.random() * (ranges[col][1] - ranges[col][0] + 1)) + ranges[col][0];
+
+        calledSet.add(num);
+        document.getElementById("callDisplay").innerText = `${col}-${num}`;
+        document.getElementById("calledCount").innerText = counter;
+
+        speakCall(col, num);
+        renderBoard("playerGameBoard", currentBoard);
+
+        if (counter >= 16) {
+          clearInterval(callTimer);
+          triggerWinner();
+        }
+      }, 3500);
+    }
+
+    function triggerWinner() {
+      if (isAutoBingo) {
+        speakAmharic("ቢንጎ! አሸናፊ ተገኝቷል!");
+      }
+
+      const modal = document.getElementById("winnerModal");
+      const timerEl = document.getElementById("winnerTimer");
+      const winningData = makeBoardData();
+
+      const winLine = [10, 11, 12, 13, 14];
+      renderBoard("winnerGameBoard", winningData, winLine);
+
+      const winningNum = selectedCards.length > 0 ? selectedCards[0] : Math.floor(Math.random() * 600) + 1;
+      document.getElementById("winnerNameTag").innerText = `ተጫዋች #${winningNum} አሸንፏል!`;
+      document.getElementById("winnerBoardNo").innerText = `Board Number #${winningNum}`;
+
+      modal.style.display = "flex";
+
+      let remain = 9;
+      timerEl.innerText = remain;
+
+    
